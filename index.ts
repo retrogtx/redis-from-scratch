@@ -21,17 +21,21 @@ const server = net.createServer(((connection: {
                             connection.write('-ERR Invalid key type\r\n');
                             break;
                         }
-                        connection.write('+OK\r\n');
+                        // connection.write('+OK\r\n');
                     }
                     break;
                     case 'get': {
                         const key = reply[1];
-                        const value = store[key];
-                        connection.write(`+${value}\r\n`);
+                        const value = (store as Record<string, any>)[key];
+                        if (!value) {
+                            connection.write(`$-1\r\n`);
+                        } else {
+                            connection.write(`$${value.length}\r\n${value}\r\n`);
+                        }
                     }
                     break;
                     default: {
-                        
+                        connection.write('-ERR Unknown command\r\n');
                     }
                 }
             },
@@ -43,6 +47,8 @@ const server = net.createServer(((connection: {
         parser.execute(data);
         connection.write('+0K\r\n');
     });
+
+    connection.write('+PONG\r\n');
 }));
 
 server.listen(8080, () => {
